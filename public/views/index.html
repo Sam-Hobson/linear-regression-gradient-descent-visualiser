@@ -1,0 +1,130 @@
+{{ block "root" . }}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Linear Regression Visualization</title>
+
+	<!-- Pico css -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2.0.6/css/pico.min.css" />
+
+	<!-- Plotly -->
+	<script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
+
+	<!-- Local imports -->
+	<link rel="stylesheet" href="/public/styles/index.css" />
+	<script src="/public/js/theme_switcher.js" defer></script>
+	<script src="/public/js/linear_regression.js" defer></script>
+</head>
+
+<body>
+	<!-- Header -->
+	<header class="container">
+		<nav>
+			<ul>
+				<li><strong>Linear Regression Visualization</strong></li>
+			</ul>
+			<ul>
+				<li>
+					<details class="dropdown">
+						<summary role="button">Theme</summary>
+						<ul>
+							<li><a href="#" data-theme-switcher="auto">Auto</a></li>
+							<li><a href="#" data-theme-switcher="light">Light</a></li>
+							<li><a href="#" data-theme-switcher="dark">Dark</a></li>
+						</ul>
+					</details>
+				</li>
+			</ul>
+		</nav>
+	</header>
+	<!-- ./ Header -->
+
+	<main class="container">
+		<div class="center-child">
+			<div class="data-input-area">
+				<textarea id="coords" placeholder="Enter coordinates" aria-describedby="valid-helper"></textarea>
+			</div>
+		</div>
+
+		<div class="center-child">
+			<button onclick="plotData()">Plot Data</button>
+			<button id="my-button">Step Gradient Descent</button>
+			<button id="reset-button">Reset</button>
+		</div>
+
+		<h3>Scatter Plot with Regression Line</h3>
+		<div id="scatter-plot"></div>
+		<h3>Cost Function</h3>
+		<div id="cost-function"></div>
+	</main>
+
+</body>
+
+<script>
+	function parseInput(text) {
+		const regex = /\(?(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)\)?/g;
+		let match, points = [];
+		while ((match = regex.exec(text)) !== null) {
+			points.push({x: parseFloat(match[1]), y: parseFloat(match[2])});
+		}
+		return points;
+	}
+
+	function validateInput(text) {
+		const points = parseInput(text);
+		const isValid = points.length >= 2;
+		const textarea = document.getElementById("coords");
+		textarea.setAttribute("aria-invalid", isValid ? "false" : "true");
+		return isValid ? points : null;
+	}
+
+	function plotData() {
+		const inputText = document.getElementById("coords").value;
+		const points = validateInput(inputText);
+
+		const x = points.map(p => p.x);
+		const y = points.map(p => p.y);
+
+		const scatterPlot = new ScatterPlot(x, y, plotData => {
+			Plotly.newPlot('scatter-plot', plotData, {title: 'Scatter Plot'});
+		});
+		scatterPlot.render();
+
+		const costFunctionPlot = new CostFunctionPlot(x, y, 0.1, plotData => {
+			Plotly.newPlot('cost-function', plotData, {title: '3D Cost Function'});
+		});
+		costFunctionPlot.render();
+
+		document.getElementById('cost-function').on('plotly_click', function (data) {
+			const clicked_w = data.points[0].x;
+			const clicked_b = data.points[0].y;
+			costFunctionPlot.placeGradientPoint(clicked_w, clicked_b);
+			costFunctionPlot.render();
+		})
+
+		document.getElementById('my-button').onclick = function (data) {
+			const regression = costFunctionPlot.stepGradientDescent();
+			if (regression === undefined) {
+				return;
+			}
+			costFunctionPlot.render();
+
+			scatterPlot.setRegressionLine(regression.w, regression.b);
+			scatterPlot.render();
+		}
+
+		document.getElementById('reset-button').onclick = function (data) {
+			scatterPlot.deleteRegressionLine();
+			scatterPlot.render();
+
+			costFunctionPlot.clearGradientPoints();
+			costFunctionPlot.render();
+		}
+	}
+</script>
+
+</html>
+{{ end }}

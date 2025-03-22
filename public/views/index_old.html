@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Linear Regression Visualization</title>
+	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			text-align: center;
+		}
+
+		textarea {
+			width: 80%;
+			height: 100px;
+		}
+
+		.container {
+			display: flex;
+			justify-content: space-around;
+			flex-wrap: wrap;
+		}
+
+		.plot-container {
+			width: 45%;
+		}
+	</style>
+</head>
+
+<body>
+	<h1>Linear Regression Cost Function Visualizer</h1>
+	<textarea id="data-input" placeholder="Enter x,y values (one per line)"></textarea>
+	<br>
+	<label>Initial Theta0: <input type="number" id="initial-theta0" value="0"></label>
+	<label>Initial Theta1: <input type="number" id="initial-theta1" value="0"></label>
+	<button onclick="plotData()">Plot Data</button>
+	<div class="container">
+		<div class="plot-container">
+			<h3>Scatter Plot with Regression Line</h3>
+			<div id="scatter-plot"></div>
+		</div>
+		<div class="plot-container">
+			<h3>Cost Function Surface</h3>
+			<div id="cost-plot"></div>
+		</div>
+	</div>
+	<p><strong>Optimal Gradient:</strong> <span id="optimal-gradient"></span></p>
+
+	<script>
+		let points = [];
+		let costData = [];
+		let theta0_range = [];
+		let theta1_range = [];
+		let minTheta0 = 0, minTheta1 = 0;
+		let descentSteps = [];
+
+		function parseInput() {
+			const input = document.getElementById("data-input").value;
+			points = input.split("\n").map(line => {
+				const [x, y] = line.split(",").map(Number);
+				return {x, y};
+			}).filter(p => !isNaN(p.x) && !isNaN(p.y));
+		}
+
+		function computeCost(theta0, theta1) {
+			let cost = 0;
+			points.forEach(p => {
+				let prediction = theta0 + theta1 * p.x;
+				cost += Math.pow(prediction - p.y, 2);
+			});
+			return cost / (2 * points.length);
+		}
+
+		function gradientDescent(alpha, iterations, startTheta0, startTheta1) {
+			let theta0 = startTheta0;
+			let theta1 = startTheta1;
+			descentSteps = [{theta0, theta1, cost: computeCost(theta0, theta1)}];
+
+			for (let i = 0; i < iterations; i++) {
+				let sumError0 = 0, sumError1 = 0;
+				points.forEach(p => {
+					let prediction = theta0 + theta1 * p.x;
+					sumError0 += prediction - p.y;
+					sumError1 += (prediction - p.y) * p.x;
+				});
+
+				theta0 -= (alpha / points.length) * sumError0;
+				theta1 -= (alpha / points.length) * sumError1;
+				descentSteps.push({theta0, theta1, cost: computeCost(theta0, theta1)});
+			}
+		}
+
+		function generateCostFunction() {
+			let theta0_values = Array.from({length: 20}, (_, i) => -10 + i * 1);
+			let theta1_values = Array.from({length: 20}, (_, i) => -5 + i * 0.5);
+			theta0_range = theta0_values;
+			theta1_range = theta1_values;
+
+			costData = theta0_values.map(t0 => theta1_values.map(t1 => computeCost(t0, t1)));
+
+			let minCost = Infinity;
+			theta0_values.forEach((t0, i) => {
+				theta1_values.forEach((t1, j) => {
+					let cost = costData[i][j];
+					if (cost < minCost) {
+						minCost = cost;
+						minTheta0 = t0;
+						minTheta1 = t1;
+					}
+				});
+			});
+			document.getElementById("optimal-gradient").textContent = `Theta0: ${minTheta0}, Theta1: ${minTheta1}`;
+		}
+
+		function plotData() {
+			parseInput();
+			generateCostFunction();
+			gradientDescent(0.1, 10, parseFloat(document.getElementById("initial-theta0").value), parseFloat(document.getElementById("initial-theta1").value));
+
+			let scatterTrace = {
+				x: points.map(p => p.x),
+				y: points.map(p => p.y),
+				mode: 'markers',
+				type: 'scatter',
+				name: 'Data Points'
+			};
+
+			Plotly.newPlot('scatter-plot', [scatterTrace], {title: 'Scatter Plot'});
+
+			let costSurface = {
+				x: theta0_range,
+				y: theta1_range,
+				z: costData,
+				type: 'surface',
+				name: 'Cost Surface'
+			};
+
+			let descentTrace = {
+				x: descentSteps.map(s => s.theta0),
+				y: descentSteps.map(s => s.theta1),
+				z: descentSteps.map(s => s.cost),
+				mode: 'lines+markers',
+				type: 'scatter3d',
+				name: 'Gradient Descent Path'
+			};
+
+			Plotly.newPlot('cost-plot', [costSurface, descentTrace], {title: 'Cost Function'});
+
+			document.getElementById("cost-plot").on('plotly_click', function (data) {
+				let clickedTheta0 = data.points[0].x;
+				let clickedTheta1 = data.points[0].y;
+				gradientDescent(0.1, 10, clickedTheta0, clickedTheta1);
+				plotData();
+			});
+		}
+	</script>
+</body>
+
+</html>
+

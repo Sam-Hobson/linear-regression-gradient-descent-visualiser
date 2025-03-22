@@ -1,0 +1,15 @@
+.center-child {
+	display: flex;
+	justify-content: center;
+	width: 100%;
+}
+
+.data-input-area {
+	max-width: 800px;
+	width: 100%;
+}
+
+#plot {
+	width: 600px;
+	height: 400px;
+}
