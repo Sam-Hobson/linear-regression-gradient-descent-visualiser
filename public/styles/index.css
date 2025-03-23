@@ -65,6 +65,14 @@
 	margin-top: 20px;
 }
 
+#main-content {
+	margin-bottom: var(--pico-spacing);
+}
+
+.vertical-item {
+	margin-bottom: var(--pico-spacing);
+}
+
 @media (max-width: 700px) {
 	#regression-content {
 		flex-direction: column;

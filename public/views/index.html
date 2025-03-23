@@ -43,6 +43,58 @@
 	<!-- ./ Header -->
 
 	<main class="container">
+		<div id="main-content">
+			In linear regression, the goal is to find a model <i>f<sub>w,b</sub>(x) = wx+b</i>, with parameters
+			<i>w,b</i>,
+			such that when given a value <i>x</i>, the output will be the correct expected output for said input.
+			The cost is a measure of how accurate the model is on the training data.
+			<br>
+			<br>
+			The equation for cost with one variable is:
+			<br>
+			<br>
+			<div class="center-child">
+				<img src="/public/assets/cost_function.png" alt="Cost function" />
+			</div>
+			<br>
+			<br>
+			Where:
+			<br>
+			<br>
+			<ul>
+				<li><i>f<sub>w,b</sub>(x<sup>(i)</sup>) = wx<sup>(i)</sup>+b</i></li>
+				<li><i>f<sub>w,b</sub>(x<sup>(i)</sup>)</i> is our prediction for example <i>i</i> using parameters
+					<i>w,b</i>. </li>
+				<li><i>(f<sub>w,b</sub>(x<sup>(i)</sup>)-y<sup>(i)</sup>)<sup>2</sup></i> is the squared difference
+					between the target value and the prediction.</li>
+				<li>These differences are summed over all the <i>m</i> examples and divided by <i>2m</i> to produce the
+					cost, <i>j(w,b)</i>. </li>
+			</ul>
+			<br>
+			So if a value for <i>w,b</i> can be found such that it minimises the cost function, this would ensure an
+			optimal formula <i>f<sub>w,b</sub>(x) = wx+b</i> for predicting new values input values (<i>x</i>).
+			<br>
+			<br>
+			To find these optimal values for <i>w,b</i>, we use gradient descent in this example.
+			Gradient descent involves repeating the following equations until convergence:
+			<br>
+			<br>
+			<div class="center-child">
+				<img src="/public/assets/gradient_descent_1.png" alt="Gradient descent equation" />
+			</div>
+			<br>
+			<br>
+			where, parameters <i>w,b</i> are updated simultaneously. The gradient is defined as:
+			<br>
+			<br>
+			<div class="center-child">
+				<img src="/public/assets/gradient_descent_2.png" alt="Gradient descent update equation" />
+			</div>
+		</div>
+
+		<br>
+
+		<h4>Input some <i>x,y</i> values, then hit <i>'Plot Data'</i></h4>
 		<div class="center-child">
 			<div class="data-input-area">
 				<textarea id="coords" placeholder="Enter coordinates" aria-describedby="valid-helper">
@@ -60,17 +112,23 @@
 		<div id="regression-content">
 			<div id="graphs">
 				<div id="scatter-plot">
+					<br>
 					<h4>Scatter Plot with Regression Line</h4>
 					<div id="scatter-plot-graph"></div>
 				</div>
 
 				<div id="cost-function">
-					<h4>Cost Function</h4>
+					<br>
+					<h4>Cost Function - Click anywhere to start gradient descent</h4>
 					<div id="cost-function-graph"></div>
 				</div>
 			</div>
+
 			<div id="graphs-side-content" class="outlined">
-				<h4>How does this work?</h4>
+				<h4>Controls</h4>
+				The larger the learning rate (α) is, the faster gradient descent will converge to a solution. But, if it is too large, gradient descent will diverge.
+				<br>
+				<br>
 				<label for="alpha-slider">Learning rate (α)</label>
 
 				<div id="alpha-slider-container">
@@ -83,9 +141,16 @@
 						oninput="setLearningRate(this.value)" />
 				</div>
 
-				<div class="vertical-buttons">
+				<div class="vertical-buttons vertical-item">
 					<button id="step-gradient-descent">Step gradient descent</button>
 					<button id="reset-gradient-descent">Reset gradient descent</button>
+				</div>
+
+				<div id="callouts" class="vertical-item" style="display: none;">
+					<div id="w-callout" style="display: none;"></div>
+					<div id="b-callout" style="display: none;"></div>
+					<div id="fwb-callout" style="display: none;"></div>
+					<div id="jwb-callout" style="display: none;"></div>
 				</div>
 
 			</div>
@@ -98,9 +163,65 @@
 <script defer>
 	let learningRate = 0.1;
 
+	let w_callout = undefined;
+	let b_callout = undefined;
+
 	function setLearningRate(r) {
 		learningRate = parseFloat(r);
 		document.getElementById("alpha-selected-value").innerHTML = learningRate;
+	}
+
+	function hideCallouts() {
+		const callouts = document.getElementById("callouts");
+		callouts.style.display = "none";
+	}
+
+	function setWCallout(x, y, value) {
+		w_callout = parseFloat(value);
+
+		const callouts = document.getElementById("callouts");
+		callouts.style.display = "block";
+		const wCallout = document.getElementById("w-callout");
+		wCallout.style.display = "block";
+		wCallout.innerHTML = `w = ${w_callout.toFixed(2)}`;
+
+		updateFwbCallout();
+		updateJwbCallout(x, y);
+	}
+
+	function setBCallout(x, y, value) {
+		b_callout = parseFloat(value);
+
+		const callouts = document.getElementById("callouts");
+		callouts.style.display = "block";
+		const bCallout = document.getElementById("b-callout");
+		bCallout.style.display = "block";
+		bCallout.innerHTML = `b = ${b_callout.toFixed(2)}`;
+
+		updateFwbCallout();
+		updateJwbCallout(x, y);
+	}
+
+	function updateFwbCallout() {
+		if (b_callout === undefined || w_callout === undefined) {
+			return;
+		}
+		const callouts = document.getElementById("callouts");
+		callouts.style.display = "block";
+		const fwbCallout = document.getElementById("fwb-callout");
+		fwbCallout.style.display = "block";
+		fwbCallout.innerHTML = `f(x<sup>(i)</sup>) = ${w_callout.toFixed(2)}x<sup>(i)</sup> ${b_callout < 0 ? '-' : '+'} ${b_callout < 0 ? -b_callout.toFixed(2) : b_callout.toFixed(2)}`;
+	}
+
+	function updateJwbCallout(x, y) {
+		if (b_callout === undefined || w_callout === undefined) {
+			return;
+		}
+		const callouts = document.getElementById("callouts");
+		callouts.style.display = "block";
+		const jwbCallout = document.getElementById("jwb-callout");
+		jwbCallout.style.display = "block";
+		jwbCallout.innerHTML = `j(${w_callout.toFixed(2)}, ${b_callout.toFixed(2)}) = ${computeCost(x, y, w_callout, b_callout).toFixed(2)}`;
 	}
 
 	function parseInput(text) {
@@ -138,17 +259,18 @@
 		}
 
 		showRegressionContent();
+		hideCallouts();
 
 		const x = points.map(p => p.x);
 		const y = points.map(p => p.y);
 
-		const scatterPlot = new ScatterPlot(x, y, (plotData, _) => {
-			Plotly.newPlot('scatter-plot-graph', plotData, {title: 'Scatter Plot'});
+		const scatterPlot = new ScatterPlot(x, y, (self, plotData, layout) => {
+			Plotly.newPlot('scatter-plot-graph', plotData, layout);
 		});
 		scatterPlot.render();
 
-		const costFunctionPlot = new CostFunctionPlot(x, y, learningRate, (plotData, self) => {
-			Plotly.newPlot('cost-function-graph', plotData, {title: '3D Cost Function'});
+		const costFunctionPlot = new CostFunctionPlot(x, y, learningRate, (self, plotData, layout) => {
+			Plotly.newPlot('cost-function-graph', plotData, layout);
 
 			document.getElementById('cost-function-graph').on('plotly_click', function (data) {
 				const clicked_w = data.points[0].x;
@@ -159,6 +281,9 @@
 				if (point !== undefined) {
 					scatterPlot.setRegressionLine(point.w, point.b);
 					scatterPlot.render();
+
+					setWCallout(x, y, point.w);
+					setBCallout(x, y, point.b);
 				}
 			})
 
@@ -175,6 +300,9 @@
 
 			scatterPlot.setRegressionLine(regression.w, regression.b);
 			scatterPlot.render();
+
+			setWCallout(x, y, regression.w);
+			setBCallout(x, y, regression.b);
 		}
 
 		document.getElementById('reset-gradient-descent').onclick = function (data) {
@@ -182,6 +310,7 @@
 			scatterPlot.render();
 			costFunctionPlot.clearGradientPoints();
 			costFunctionPlot.render();
+			hideCallouts();
 		}
 	}
 </script>

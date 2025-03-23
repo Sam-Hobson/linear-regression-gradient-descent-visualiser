@@ -69,7 +69,7 @@ class ScatterPlot {
 			res.push(this.regressionLine);
 		}
 
-		this.renderFunc(res, this);
+		this.renderFunc(this, res, undefined);
 	}
 }
 
@@ -89,7 +89,7 @@ class CostFunctionPlot {
 	}
 
 	render() {
-		const range = 2;
+		const range = 1;
 		const numPoints = 100;
 		const w_range = [...Array(numPoints).keys()].map(i => (this.w_optimal - range) + range * (i / (numPoints / 2)));
 		const b_range = [...Array(numPoints).keys()].map(i => (this.b_optimal - range) + range * (i / (numPoints / 2)));
@@ -105,6 +105,7 @@ class CostFunctionPlot {
 				y: b_range,
 				z: costValues,
 				type: 'contour',
+				hovertemplate: `w:%{x:.2f} b:%{y:.2f} cost:%{z:.2f}`
 			},
 		];
 
@@ -115,10 +116,24 @@ class CostFunctionPlot {
 				mode: 'lines+markers',
 				type: 'scatter',
 				name: 'Gradient Descent Path',
+				hovertemplate: `w:%{x:.2f} b:%{y:.2f}`
 			});
 		}
 
-		this.renderFunc(res, this);
+		const layout = {
+			xaxis: {
+				title: {
+					text: 'w (gradient)'
+				}
+			},
+			yaxis: {
+				title: {
+					text: 'b (constant)'
+				}
+			},
+		};
+
+		this.renderFunc(this, res, layout);
 	}
 
 	placeGradientPoint(w, b) {
