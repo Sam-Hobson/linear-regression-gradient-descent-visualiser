@@ -69,7 +69,7 @@ class ScatterPlot {
 			res.push(this.regressionLine);
 		}
 
-		this.renderFunc(res);
+		this.renderFunc(res, this);
 	}
 }
 
@@ -89,39 +89,45 @@ class CostFunctionPlot {
 	}
 
 	render() {
-		const w_range = [...Array(20).keys()].map(i => (this.w_optimal - 2) + i * 0.2);
-		const b_range = [...Array(20).keys()].map(i => (this.b_optimal - 2) + i * 0.2);
+		const range = 2;
+		const numPoints = 100;
+		const w_range = [...Array(numPoints).keys()].map(i => (this.w_optimal - range) + range * (i / (numPoints / 2)));
+		const b_range = [...Array(numPoints).keys()].map(i => (this.b_optimal - range) + range * (i / (numPoints / 2)));
 		const costValues = w_range.map(w => {
 			return b_range.map(b => {
-				console.log(`${w} ${b} ${computeCost(this.x, this.y, w, b)}`);
 				return computeCost(this.x, this.y, w, b);
 			});
 		});
 
-		this.renderFunc([
+		let res = [
 			{
 				x: w_range,
 				y: b_range,
 				z: costValues,
-				type: 'surface',
+				type: 'contour',
 			},
-			{
+		];
+
+		if (this.gradientDescentPoints.length > 0) {
+			res.push({
 				x: this.gradientDescentPoints.map(c => c.w),
 				y: this.gradientDescentPoints.map(c => c.b),
-				z: this.gradientDescentPoints.map(c => c.cost),
 				mode: 'lines+markers',
-				type: 'scatter3d',
+				type: 'scatter',
 				name: 'Gradient Descent Path',
-			}
-		])
+			});
+		}
+
+		this.renderFunc(res, this);
 	}
 
 	placeGradientPoint(w, b) {
 		// Add this point to the gradient descent if this is the starting point
 		if (this.gradientDescentPoints.length > 0) {
-			return;
+			this.clearGradientPoints();
 		}
-		this.gradientDescentPoints.push({ w: w, b: b, cost: computeCost(this.x, this.y, w, b) });
+		this.gradientDescentPoints.push({ w: w, b: b });
+		return { w: w, b: b };
 	}
 
 	clearGradientPoints() {
@@ -152,7 +158,6 @@ class CostFunctionPlot {
 		this.gradientDescentPoints.push({
 			w: newPoint_w,
 			b: newPoint_b,
-			cost: computeCost(this.x, this.y, newPoint_w, newPoint_b)
 		})
 
 		return {

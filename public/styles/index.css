@@ -1,7 +1,34 @@
+.outlined {
+	border: var(--pico-border-width) solid var(--pico-primary);
+	padding: 1rem;
+	border-radius: var(--pico-border-radius);
+}
+
+.vertical-buttons {
+	display: flex;
+	gap: 10px;
+	flex-direction: column;
+}
+
+.range-labels {
+	display: flex;
+	justify-content: space-between;
+}
+
+.range-labels>.selected-value {
+	border: var(--pico-border-width) solid var(--pico-primary);
+	border-radius: var(--pico-border-radius);
+	padding-left: 1rem;
+	padding-right: 1rem;
+}
+
 .center-child {
 	display: flex;
 	justify-content: center;
+	align-items: center;
 	width: 100%;
+	flex-wrap: wrap;
+	gap: 10px 50px;
 }
 
 .data-input-area {
@@ -9,7 +36,37 @@
 	width: 100%;
 }
 
+#coord-box-options>button {
+	min-width: 200px;
+}
+
 #plot {
 	width: 600px;
 	height: 400px;
+}
+
+#regression-content {
+	display: none;
+	flex-wrap: wrap;
+	align-items: stretch;
+	gap: 10px;
+}
+
+#regression-content>#graphs {
+	flex: 1;
+	min-width: 250px;
+	padding: 20px;
+}
+
+#regression-content>#graphs-side-content {
+	flex: 0.3;
+	min-width: 150px;
+	padding: 20px;
+	margin-top: 20px;
+}
+
+@media (max-width: 700px) {
+	#regression-content {
+		flex-direction: column;
+	}
 }

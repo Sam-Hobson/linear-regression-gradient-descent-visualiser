@@ -45,25 +45,64 @@
 	<main class="container">
 		<div class="center-child">
 			<div class="data-input-area">
-				<textarea id="coords" placeholder="Enter coordinates" aria-describedby="valid-helper"></textarea>
+				<textarea id="coords" placeholder="Enter coordinates" aria-describedby="valid-helper">
+1,1 2,2 3,3
+4,4 5,5 6,6
+				</textarea>
 			</div>
 		</div>
 
-		<div class="center-child">
+		<div id="coord-box-options" class="center-child">
 			<button onclick="plotData()">Plot Data</button>
-			<button id="my-button">Step Gradient Descent</button>
-			<button id="reset-button">Reset</button>
+			<button onclick="hideRegressionContent()">Reset</button>
 		</div>
 
-		<h3>Scatter Plot with Regression Line</h3>
-		<div id="scatter-plot"></div>
-		<h3>Cost Function</h3>
-		<div id="cost-function"></div>
+		<div id="regression-content">
+			<div id="graphs">
+				<div id="scatter-plot">
+					<h4>Scatter Plot with Regression Line</h4>
+					<div id="scatter-plot-graph"></div>
+				</div>
+
+				<div id="cost-function">
+					<h4>Cost Function</h4>
+					<div id="cost-function-graph"></div>
+				</div>
+			</div>
+			<div id="graphs-side-content" class="outlined">
+				<h4>How does this work?</h4>
+				<label for="alpha-slider">Learning rate (α)</label>
+
+				<div id="alpha-slider-container">
+					<div class="range-labels">
+						<span>0.05</span>
+						<span id="alpha-selected-value" class="selected-value">0.1</span>
+						<span>1.00</span>
+					</div>
+					<input type="range" id="alpha-slider" min="0.05" max="1.00" step="0.05" value="0.1"
+						oninput="setLearningRate(this.value)" />
+				</div>
+
+				<div class="vertical-buttons">
+					<button id="step-gradient-descent">Step gradient descent</button>
+					<button id="reset-gradient-descent">Reset gradient descent</button>
+				</div>
+
+			</div>
+		</div>
+
 	</main>
 
 </body>
 
-<script>
+<script defer>
+	let learningRate = 0.1;
+
+	function setLearningRate(r) {
+		learningRate = parseFloat(r);
+		document.getElementById("alpha-selected-value").innerHTML = learningRate;
+	}
+
 	function parseInput(text) {
 		const regex = /\(?(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)\)?/g;
 		let match, points = [];
@@ -81,31 +120,53 @@
 		return isValid ? points : null;
 	}
 
+	function hideRegressionContent() {
+		const scatterPlot = document.getElementById("regression-content");
+		scatterPlot.style.display = "none";
+	}
+
+	function showRegressionContent() {
+		const scatterPlot = document.getElementById("regression-content");
+		scatterPlot.style.display = "flex";
+	}
+
 	function plotData() {
-		const inputText = document.getElementById("coords").value;
-		const points = validateInput(inputText);
+		const points = validateInput(document.getElementById("coords").value);
+
+		if (points === null) {
+			return;
+		}
+
+		showRegressionContent();
 
 		const x = points.map(p => p.x);
 		const y = points.map(p => p.y);
 
-		const scatterPlot = new ScatterPlot(x, y, plotData => {
-			Plotly.newPlot('scatter-plot', plotData, {title: 'Scatter Plot'});
+		const scatterPlot = new ScatterPlot(x, y, (plotData, _) => {
+			Plotly.newPlot('scatter-plot-graph', plotData, {title: 'Scatter Plot'});
 		});
 		scatterPlot.render();
 
-		const costFunctionPlot = new CostFunctionPlot(x, y, 0.1, plotData => {
-			Plotly.newPlot('cost-function', plotData, {title: '3D Cost Function'});
+		const costFunctionPlot = new CostFunctionPlot(x, y, learningRate, (plotData, self) => {
+			Plotly.newPlot('cost-function-graph', plotData, {title: '3D Cost Function'});
+
+			document.getElementById('cost-function-graph').on('plotly_click', function (data) {
+				const clicked_w = data.points[0].x;
+				const clicked_b = data.points[0].y;
+				const point = self.placeGradientPoint(clicked_w, clicked_b);
+				self.render();
+
+				if (point !== undefined) {
+					scatterPlot.setRegressionLine(point.w, point.b);
+					scatterPlot.render();
+				}
+			})
+
 		});
 		costFunctionPlot.render();
 
-		document.getElementById('cost-function').on('plotly_click', function (data) {
-			const clicked_w = data.points[0].x;
-			const clicked_b = data.points[0].y;
-			costFunctionPlot.placeGradientPoint(clicked_w, clicked_b);
-			costFunctionPlot.render();
-		})
 
-		document.getElementById('my-button').onclick = function (data) {
+		document.getElementById('step-gradient-descent').onclick = function (data) {
 			const regression = costFunctionPlot.stepGradientDescent();
 			if (regression === undefined) {
 				return;
@@ -116,10 +177,9 @@
 			scatterPlot.render();
 		}
 
-		document.getElementById('reset-button').onclick = function (data) {
+		document.getElementById('reset-gradient-descent').onclick = function (data) {
 			scatterPlot.deleteRegressionLine();
 			scatterPlot.render();
-
 			costFunctionPlot.clearGradientPoints();
 			costFunctionPlot.render();
 		}
