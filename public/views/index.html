@@ -133,11 +133,11 @@
 
 				<div id="alpha-slider-container">
 					<div class="range-labels">
-						<span>0.05</span>
-						<span id="alpha-selected-value" class="selected-value">0.1</span>
-						<span>1.00</span>
+						<span>0.001</span>
+						<span id="alpha-selected-value" class="selected-value">0.100</span>
+						<span>1.000</span>
 					</div>
-					<input type="range" id="alpha-slider" min="0.05" max="1.00" step="0.05" value="0.1"
+					<input type="range" id="alpha-slider" min="0.001" max="1.000" step="0.001" value="0.1"
 						oninput="setLearningRate(this.value)" />
 				</div>
 
@@ -168,7 +168,7 @@
 
 	function setLearningRate(r) {
 		learningRate = parseFloat(r);
-		document.getElementById("alpha-selected-value").innerHTML = learningRate;
+		document.getElementById("alpha-selected-value").innerHTML = learningRate.toFixed(3);
 	}
 
 	function hideCallouts() {
@@ -269,7 +269,7 @@
 		});
 		scatterPlot.render();
 
-		const costFunctionPlot = new CostFunctionPlot(x, y, learningRate, (self, plotData, layout) => {
+		const costFunctionPlot = new CostFunctionPlot(x, y, () => ({learningRate: learningRate}), (self, plotData, layout) => {
 			Plotly.newPlot('cost-function-graph', plotData, layout);
 
 			document.getElementById('cost-function-graph').on('plotly_click', function (data) {

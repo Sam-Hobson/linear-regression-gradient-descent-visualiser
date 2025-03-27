@@ -75,7 +75,7 @@ class ScatterPlot {
 
 
 class CostFunctionPlot {
-	constructor(x, y, learningRate, renderFunc) {
+	constructor(x, y, props, renderFunc) {
 		this.x = x;
 		this.y = y;
 
@@ -83,7 +83,7 @@ class CostFunctionPlot {
 		this.w_optimal = optimal_wb.w;
 		this.b_optimal = optimal_wb.b;
 
-		this.learningRate = learningRate;
+		this.props = props;
 		this.renderFunc = renderFunc;
 		this.gradientDescentPoints = [];
 	}
@@ -150,6 +150,7 @@ class CostFunctionPlot {
 	}
 
 	stepGradientDescent() {
+		console.log(`Learning rate: ${this.props().learningRate}`);
 		if (this.gradientDescentPoints.length === 0) {
 			return undefined;
 		}
@@ -167,8 +168,8 @@ class CostFunctionPlot {
 			b_gradient += error;
 		}
 
-		const newPoint_w = currentPoint.w - (this.learningRate / m) * w_gradient;
-		const newPoint_b = currentPoint.b - (this.learningRate / m) * b_gradient;
+		const newPoint_w = currentPoint.w - (this.props().learningRate / m) * w_gradient;
+		const newPoint_b = currentPoint.b - (this.props().learningRate / m) * b_gradient;
 
 		this.gradientDescentPoints.push({
 			w: newPoint_w,
